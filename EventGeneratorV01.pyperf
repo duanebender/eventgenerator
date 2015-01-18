@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ProfilingTarget xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ProjectTarget>
+    <TargetProject>8d0767b5-f1aa-44bc-b0dc-5b51fa64a2b4</TargetProject>
+    <FriendlyName>EventGeneratorV01</FriendlyName>
+  </ProjectTarget>
+  <Reports>
+    <Report>
+      <Filename>C:\Users\Duane\AppData\Local\Temp\EventGeneratorV01_20141211.vsp</Filename>
+    </Report>
+  </Reports>
+</ProfilingTarget>
