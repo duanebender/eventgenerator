@@ -2,10 +2,12 @@ import random
 import sys
 import datetime
 
-print('Event Generator Version 0.0.5')
-print('12/12/2014\n')
+print('Event Generator Version 0.0.6')
+print('1/19/2015\n')
+print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
 
-
+# TODO: define a debug level 
+# TODO: print simulation parameters
 # declare global parameters
 
 # Value set parameters
@@ -26,15 +28,15 @@ Number_of_Operations = 0
 
 # itemset parameters
 Itemsets = []
-Number_of_Itemsets = 100
-Itemset_Correlation = 0.25
-Average_Itemset_Length = 2.5
+Number_of_Itemsets = 1000
+Itemset_Correlation = 0
+Average_Itemset_Length = 3
 User_Defined_Itemsets = [["R-1","U-99", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", ""], ["R-2","U-2","","T-520","","",""]]
-Itemset_Saturation = 0.2 # this is the itemset random saturation % (0-1.0) (ie when generating events use 80% random values and 20% defined itemsets) 
+Itemset_Saturation = 0.2 # this is the itemset random saturation % (range 0.0 -> 1.0) (ie when generating events use 20% defined itemsets and 80% completely random events) 
 
 # sequence pattern parameters
 Sequence_Patterns = []
-Number_of_Sequence_Patterns = 10
+Number_of_Sequence_Patterns = 100
 Sequence_Pattern_Correlation = 0.4
 Average_Sequence_Pattern_Length = 3
 User_Defined_Sequence_Patterns = [[0,1],[0,2]]
@@ -49,7 +51,7 @@ End_Date = datetime.date(2011, 2, 16)
 End_Time = datetime.time(23, 59, 59)
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 25
+Average_Events_Per_Day = 250
 Sequence_Saturation = 0.10 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 
@@ -92,9 +94,10 @@ def Load_Parameters():
 
 def Generate_Itemsets():
     "Procedure which generates itemset templates"
-    sys.stdout.write("Generating " + str(Number_of_Itemsets) + "itemsets...") 
+    sys.stdout.write("Generating " + str(Number_of_Itemsets) + " itemsets...") 
     sys.stdout.flush()
 
+    # TODO: make more configurable - i.e. should be able to set number of attributes and name them dynamically (other than time and date)
     global Roles
     global Users
     global Locations
@@ -118,37 +121,38 @@ def Generate_Itemsets():
     # I think for overall parsing efficiency the sparse method should be used
     # each column will be defined a meaning - i.e. the type is indicated by the position 
 
-    # itemset columns will be defined as : [ User, Role, Session, Resource, ResourceType, Operation, Patient,  Emergency, Time, Date]  
+    # itemset columns will be hard-defined for now as : [ User, Role, Session, Resource, ResourceType, Operation, Patient,  Emergency, Time, Date]  
 
     # For comparison to the "live" data we have we should have an itemset definition that matches the ATNA logs 
     # the ATNA transformed output looks as follows : [ R-1, U-1, L-1, T-1, P-1, D-1, O-1 ] (role, user, location, time, patient, data, operation) 
 
-    # if available, load user defined itemsets
-
+    # if there are any defined, load user defined itemsets
     if len(User_Defined_Itemsets) > 0 :
         Itemsets = User_Defined_Itemsets
     
     # problem : if the attributes are empty in the previous entry then there is a chance the copied attributes will be empty
     # therefore we must "fill in" the itemset templates with random values before copying them, and we must also "fill in" the remaining attributes before adding them to the itemset collection
-     
+    # bigger problem : we can't fill in these itemset templates yet or else they will all be the same when instantiated :: do not fill in for now
     #Fill_Attributes()
     
-    for x in range(len(Itemsets), Number_of_Itemsets): # need to account for Itemsets already added as user defined itemsets 
-        sys.stdout.write(".")
+    for x in range(len(Itemsets), Number_of_Itemsets): # need to account for Itemsets already added as user defined itemsets, i.e. begin creating templates at end of predefined template area and continue to max number 
+        sys.stdout.write(".") # progress indicator
         sys.stdout.flush()
+        
+        attributes_copied = 0
 
-        Itemset = ["","","","","","",""] # TODO: change to a variable loop using Number_of)Attributes instead of a hard coded list
+        Itemset = ["","","","","","",""] # TODO: change to a dynamic structure using Number_of)Attributes instead of a hard coded list
         if (len(Itemsets) > 0 and Itemset_Correlation > 0) :
-            # this is not the first itemset and the correlation is greater than 0 - this means we shall seed the current itemset with some of the values from the previous itemset 
-            # how many attributes to copy? -> use average itemset length parameter to decide 
-            # pick a random number between 0 and the average itemset length (Note: this will not converge to the average itemset length - how to fix? mult by 2?) 
+            # this is not the first itemset and the correlation is greater than 0 - this means we shall seed the current itemset with some of the values from the previous itemset  (why previous? can it be random?)
+            # how many attributes to copy? -> as many as possible up to the average itemset length parameter, if not enough available then add some random ones 
+            # pick a random number between 0 and the average itemset length 
             #Random_Number_of_Attributes = round(random.randint(0, round(Average_Itemset_Length * 2)))
-            Random_Number_of_Attributes = int(random.normalvariate(Average_Itemset_Length, 1.0)) 
+            Random_Number_of_Attributes = int(random.normalvariate(Average_Itemset_Length, 1.0)) # Note: using a hard-coded std deviation of 1.0 -> possibly make a parameter 
             # don't go over the maximum number of attributes
             if (Random_Number_of_Attributes > Number_of_Attributes):
                 Random_Number_of_Attributes = Number_of_Attributes
                         
-            # change to selecting a random itemset template from the set (problem is if only previous set is used and attributes are not all filled in the set quickly converges to empty)
+            # select a random itemset template from the existing set to start with (problem is if only previous set is used and attributes are not all filled in the set quickly converges to empty)
             random_itemset_index = random.randint(0, len(Itemsets)-1)
             tmp_itemset = Itemsets[random_itemset_index]                                                                                                                   
             # how many of these are not empty/blank?
@@ -157,7 +161,6 @@ def Generate_Itemsets():
                 if tmp_itemset[r] != "":
                     random_itemset_size = random_itemset_size + 1
 
-            attributes_copied = 0                
             for y in range(0, Random_Number_of_Attributes): # this value is for the correlated attributes with the previous itemset, then we need to add the random values 
                 # randomly pick attributes by index (number between 0 and 6 (7 attributes total for atna model))
                 # keep going until they are all done (no way to know since we are randomly selecting and we may repeat the same attribute, that is the reason for the while 1 stmt
@@ -175,25 +178,139 @@ def Generate_Itemsets():
                         Itemset[attribute_index] = Itemsets[random_itemset_index][attribute_index]
                         attributes_copied = attributes_copied + 1
                         break
+            # now add some random attributes if needed to get up to the desired number of attributes in this itemset (ie only 2 may have been copied but we want a length of 4 for example)
+            while attributes_copied < random_itemset_size:
+                # randomly select the attribute to fill in 
+                attribute_index = random.randint(0, Number_of_Attributes-1)
+                # if the itemset value is blank, go ahead and select a value for that attribute
+                if Itemset[attribute_index] == "":
+                    # copy from the value sets or from other itemsets? (copy from value sets for now)
+                    # structure is (role, user, location, time, patient, data, operation)
+                    if attribute_index == 0:
+                        # index 0 is Role
+                        # make sure we have at least one value for role
+                        if len(Roles) > 0 :
+                            Itemset[attribute_index] = Roles[random.randint(0, len(Roles)-1)] # randomly select a value from Roles
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 1:
+                        # index 1 is User
+                        # make sure we have at least one value for users
+                        if len(Users) > 0 : 
+                            Itemset[attribute_index] = Users[random.randint(0, len(Users)-1)] # randomly select a value from Users
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 2:
+                        # index 2 is locations
+                        if len(Locations) > 0 :
+                            Itemset[attribute_index] = Locations[random.randint(0, len(Locations)-1)] # randomly select a value from Locations
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 3:
+                        # index 3 is times
+                        if len(Times) > 0 :
+                            Itemset[attribute_index] = Times[random.randint(0, len(Times)-1)] # randomly select a value from Times
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 4:
+                        # index 4 is patients
+                        if len(Patients) > 0 :
+                            Itemset[attribute_index] = Patients[random.randint(0, len(Patients)-1)] # randomly select a value from Patients
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 5:
+                        # index 5 is data
+                        if len(Data) > 0 :
+                            Itemset[attribute_index] = Data[random.randint(0, len(Data)-1)] # randomly select a value from Data
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 6:
+                        # index 6 is operations
+                        if len(Operations) > 0 :
+                            Itemset[attribute_index] = Operations[random.randint(0, len(Operations)-1)] # randomly select a value from Operations
+                            attributes_copied = attributes_copied + 1
+        else : # this is the first itemset or there is no correlation between itemsets 
+            # generate a random itemset template of the average length set in the parameter
+            Random_Number_of_Attributes = int(random.normalvariate(Average_Itemset_Length, 1.0)) # Note: using a hard-coded std deviation of 1.0 -> possibly make a parameter 
+            # make sure parameter was not set larger than the structure size
+            if (Random_Number_of_Attributes > Number_of_Attributes):
+                Random_Number_of_Attributes = Number_of_Attributes
             
-        # add the new incomplete itemset to set of itemsets 
+            # now add random attributes get up to the desired number of attributes in this itemset 
+            while attributes_copied < Random_Number_of_Attributes:
+                # randomly select the attribute to fill in 
+                attribute_index = random.randint(0, Number_of_Attributes-1)
+                # if the itemset value is blank, go ahead and select a value for that attribute
+                if Itemset[attribute_index] == "":
+                    # copy values from the value set definitions 
+                    # structure is (role, user, location, time, patient, data, operation)
+                    if attribute_index == 0:
+                        # index 0 is Role
+                        # make sure we have at least one value for role
+                        if len(Roles) > 0 :
+                            Itemset[attribute_index] = Roles[random.randint(0, len(Roles)-1)] # randomly select a value from Roles
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 1:
+                        # index 1 is User
+                        # make sure we have at least one value for users
+                        if len(Users) > 0 : 
+                            Itemset[attribute_index] = Users[random.randint(0, len(Users)-1)] # randomly select a value from Users
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 2:
+                        # index 2 is locations
+                        if len(Locations) > 0 :
+                            Itemset[attribute_index] = Locations[random.randint(0, len(Locations)-1)] # randomly select a value from Locations
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 3:
+                        # index 3 is times
+                        if len(Times) > 0 :
+                            Itemset[attribute_index] = Times[random.randint(0, len(Times)-1)] # randomly select a value from Times
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 4:
+                        # index 4 is patients
+                        if len(Patients) > 0 :
+                            Itemset[attribute_index] = Patients[random.randint(0, len(Patients)-1)] # randomly select a value from Patients
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 5:
+                        # index 5 is data
+                        if len(Data) > 0 :
+                            Itemset[attribute_index] = Data[random.randint(0, len(Data)-1)] # randomly select a value from Data
+                            attributes_copied = attributes_copied + 1
+                    elif attribute_index == 6:
+                        # index 6 is operations
+                        if len(Operations) > 0 :
+                            Itemset[attribute_index] = Operations[random.randint(0, len(Operations)-1)] # randomly select a value from Operations
+                            attributes_copied = attributes_copied + 1
+             
+                                                     
+
+
+
+        # add the (partially complete) itemset to set of itemset templates 
         Itemsets.append(Itemset)
-        # must fill in attributes now, otherwise copying from previous set to next set may copy empty values which will eventually be all empty 
-        # TODO: move to event generator 
+
+        # TODO: move to event generator - cannot fill attrbutes here as the events would contain all the same values 
         # Fill_Attributes()
 
-    # show itemset list for debugging purposes
-    print()
-    for x in range(len(Itemsets)):
-        print(Itemsets[x])
         # TODO: assign each itemset a probability (use a shadow matrix) 
         # normalize the probabilities
         # calculate cumulative probabilities 	
 
+    # show itemset list for debugging purposes
+    print()
+    Attribute_Count = 0
+    for x in range(len(Itemsets)):
+        print(Itemsets[x])
+        Current_Itemset = Itemsets[x]
+        for x in range (0, len(Current_Itemset)) :
+            if Current_Itemset[x] != "" :
+                Attribute_Count = Attribute_Count + 1
+    Average_Attributes = Attribute_Count / len(Itemsets)
+    print("Average itemset length (desired / actual) = (" + str(Average_Itemset_Length) + " / " + str(Average_Attributes) + ")" )
+    print()
+
+    
+
+
+
 
 def Generate_Sequence_Patterns():
     "Procedure which generates sequence patterns"
-    sys.stdout.write("Generating sequence patterns...")
+    sys.stdout.write("Generating " + str(Number_of_Sequence_Patterns) + " sequence patterns...")
     sys.stdout.flush()
     
     global Roles
@@ -227,11 +344,10 @@ def Generate_Sequence_Patterns():
 
         # reset local pattern
         Current_Sequence_Pattern = []
-        Index_Set = []
+        Index_Set = [] # a set of indexes into the itemset collection is a sequence pattern
         # select the length of the sequence from a frequency distribution around the average 
          
-        # if(correlation is defined (not 0) and this is not the first sequence pattern then (there is a correlation between the sequence and the previous
-        # sequence so copy some of the itemsets from the previous sequence
+        # if(correlation is defined (not 0) and this is not the first sequence pattern then (there is a correlation between the sequence and the previous sequence so copy some of the itemsets from the previous sequence
         # Note: use index into itemset collection to define sequence patterns, i.e. [0,3,4], [1,2,3] etc.
         if (Sequence_Pattern_Correlation > 0 and len(Sequence_Patterns) > 0) :
             # length of current sequence (avg length paramter rnd), don't want 0 length patterns
@@ -239,11 +355,12 @@ def Generate_Sequence_Patterns():
             Current_Sequence_Length = int(random.normalvariate(Average_Sequence_Pattern_Length, 1.0))
             # how many to copy from previous sequence?
             Sequence_Correlation_Overlap = int(Current_Sequence_Length * Sequence_Pattern_Correlation) # should this be int, round, ceil, floor, trunc?  
-            # which ones? (randomly select?) (need to include correlation to previous so copy some values
-            # first copy overlap sequences from previous set
-            Previous_Sequence_Set = Sequence_Patterns[x-1]
+            # which ones? (randomly select?) 
+            # first copy overlap sequences from randomly selected set
+            #Previous_Sequence_Set = Sequence_Patterns[x-1]
+            Previous_Sequence_Set = random.choice(Itemsets)
             Previous_Sequence_Length = len(Previous_Sequence_Set)
-            # overlap can't be larger than the length of the previous sequence
+            # overlap can't be larger than the length of the previous sequence 
             if (Sequence_Correlation_Overlap > Previous_Sequence_Length) :
                 Sequence_Correlation_Overlap = Previous_Sequence_Length
 
@@ -252,15 +369,14 @@ def Generate_Sequence_Patterns():
                 # copy the index values from previous sequence
                 Index_Set.append(Previous_Sequence_Set[y])
             
-            #randomize the list of indexes
-            random.shuffle(Index_Set)
+            #randomize the list of indexes (why am i randomizing? that seems to ruin the sequence pattern)
+            #random.shuffle(Index_Set)
              
-            for y in range(Sequence_Correlation_Overlap) : 
-                Index = int(Index_Set.pop(0))
-                Current_Sequence_Pattern.append(Index)
+            #for y in range(Sequence_Correlation_Overlap) : 
+            #    Index = int(Index_Set.pop(0))
+            #    Current_Sequence_Pattern.append(Index)
 
             # that takes care of the correlation overlap, now need to add additional random indexes up to the current sequence length
-
             # create a list of all available indexes
             for z in range(Number_of_Itemsets):
                 Index_Set.append(z)
@@ -278,7 +394,7 @@ def Generate_Sequence_Patterns():
             # just randomly select itemsets to include in sequence patterns
             # length of current sequence (avg length paramter rnd)
             #Current_Sequence_Length = round(random.randint(0, Average_Sequence_Pattern_Length * 2))
-            Current_Sequence_Length = int(random.normalvariate(Average_Sequence_Pattern_Length,0))
+            Current_Sequence_Length = int(random.normalvariate(Average_Sequence_Pattern_Length,1.0))
 
             # create a list of all available indexes
             for z in range(Number_of_Itemsets):
@@ -294,13 +410,16 @@ def Generate_Sequence_Patterns():
         if (len(Current_Sequence_Pattern) > 0):
             Sequence_Patterns.append(Current_Sequence_Pattern)
 
-    # show itemset list for debugging purposes
-    for x in range(len(Sequence_Patterns)):
-        print(Sequence_Patterns[x])
-
         # TODO: assign each pattern a probability (use a shadow matrix) 
         # normalize the probabilities
         # calculate cumulative probabilities 	
+
+    # show itemset list for debugging purposes
+    print() 
+    for x in range(len(Sequence_Patterns)):
+        print(Sequence_Patterns[x])
+    print()
+
 
 
 def Generate_Events():
@@ -318,9 +437,9 @@ def Generate_Events():
     global Sequence_Patterns
 
     Current_Day = Start_Date
-    # Event = ["","","","","","",""] (role, user, location, time, patient, data, operation) 
-    Current_Event = ["","","","","","",""] 
-    Empty_Event = ["","","","","","",""] 
+    # Event = ["","","","","","",""] (role, user, location, time, date, patient, data, operation) 
+    Current_Event = ["","","","","","","",""] 
+    Empty_Event = ["","","","","","","",""] 
     Daily_Events = []
     Pattern = []
 
@@ -386,8 +505,9 @@ def Generate_Events():
             Time_Samples.sort() # sort the values to resemble a sequence log
             # add the "T-" string and copy to the events array
             for k in range(len(Time_Samples)):
+                Date_String = "D-" + str(Current_Day.year) + "/" + str(Current_Day.month) + "/" + str(Current_Day.day) 
                 Time_String = "T-" + str(Time_Samples[k])
-                Current_Event = ["","","",Time_String,"","",""]
+                Current_Event = ["","","",Date_String, Time_String,"","",""]
                 Daily_Events.append(Current_Event)
 
 
@@ -407,7 +527,7 @@ def Generate_Events():
                 Rnd = random.randint(0, len(Sequence_Patterns)-1)
                 Pattern = Sequence_Patterns[Rnd]
                 for k in range(len(Pattern)):
-                    # randomly insert into event stream, try to move along evenly through the stream 
+                    # randomly insert into event stream, move along randomly through the stream 
                     Step = Marker + int((len(Daily_Events) - Marker) / (Num_Sequences * Average_Sequence_Pattern_Length))
                     Event_Index = random.randint(Marker, Step)
                     Itemset_Index = Pattern[k]
@@ -460,6 +580,7 @@ def Generate_Events():
                         Current_Event[4] = Itemset[4]
                         Current_Event[5] = Itemset[5]
                         Current_Event[6] = Itemset[6]
+                        Current_Event[7] = Itemset[7]
                         # need to insert at beginning - no events with lower time
                         Daily_Events.insert(0, Current_Event)
                         # update size variable 
@@ -475,8 +596,13 @@ def Generate_Events():
                         Current_Event[4] = Itemset[4]
                         Current_Event[5] = Itemset[5]
                         Current_Event[6] = Itemset[6]
+                        Current_Event[7] = Itemset[7]
                         Daily_Events[Random] = Current_Event
                         Itemset_Events = Itemset_Events - 1                    
+
+                    # the itemsets were templates, i.e. they have empty spaces
+                    # now make sure all of the event attributes are filled in with values
+
 
 
             # insert random events
@@ -490,9 +616,10 @@ def Generate_Events():
                     Current_Event[1] = Users[random.randint(0, len(Users)-1)]
                     Current_Event[2] = Locations[random.randint(0, len(Locations)-1)]
                     # leave [3] alone - it already has the time defined from above
-                    Current_Event[4] = Patients[random.randint(0, len(Patients)-1)]
-                    Current_Event[5] = Data[random.randint(0, len(Data)-1)]
-                    Current_Event[6] = Operations[random.randint(0, len(Operations)-1)]
+                    Current_Event[4] = Date_String # todays date
+                    Current_Event[5] = Patients[random.randint(0, len(Patients)-1)]
+                    Current_Event[6] = Data[random.randint(0, len(Data)-1)]
+                    Current_Event[7] = Operations[random.randint(0, len(Operations)-1)]
                     Daily_Events[Random] = Current_Event                    
                     Random_Events = Random_Events - 1
                  
@@ -504,6 +631,7 @@ def Generate_Events():
         Current_Day = Current_Day + datetime.timedelta(1,0,0,0,0,0,0)
 
     # show event list for debugging purposes
+    print()
     for x in range(len(Events)):
         print(Events[x])
 
