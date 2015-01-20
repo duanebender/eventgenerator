@@ -2,7 +2,7 @@ import random
 import sys
 import datetime
 
-print('Event Generator Version 0.0.6')
+print('Event Generator Version 0.0.7')
 print('1/19/2015\n')
 print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
 
@@ -31,7 +31,7 @@ Itemsets = []
 Number_of_Itemsets = 1000
 Itemset_Correlation = 0
 Average_Itemset_Length = 3
-User_Defined_Itemsets = [["R-1","U-99", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", ""], ["R-2","U-2","","T-520","","",""]]
+User_Defined_Itemsets = [["R-1","U-99", "", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", "", ""], ["R-2","U-2","","T-520","","","",""]]
 Itemset_Saturation = 0.2 # this is the itemset random saturation % (range 0.0 -> 1.0) (ie when generating events use 20% defined itemsets and 80% completely random events) 
 
 # sequence pattern parameters
@@ -52,7 +52,7 @@ End_Time = datetime.time(23, 59, 59)
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
 Average_Events_Per_Day = 250
-Sequence_Saturation = 0.10 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
+Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 
 def Load_ValueSets():
@@ -310,8 +310,6 @@ def Generate_Itemsets():
 
 def Generate_Sequence_Patterns():
     "Procedure which generates sequence patterns"
-    sys.stdout.write("Generating " + str(Number_of_Sequence_Patterns) + " sequence patterns...")
-    sys.stdout.flush()
     
     global Roles
     global Users
@@ -329,6 +327,9 @@ def Generate_Sequence_Patterns():
     global Average_Sequence_Pattern_Length 
     global Sequence_Patterns
     global User_Defined_Sequence_Patterns
+
+    sys.stdout.write("Generating " + str(Number_of_Sequence_Patterns) + " sequence patterns...")
+    sys.stdout.flush()
 
     Index_Set = []
     Current_Sequence_Pattern = []
@@ -378,6 +379,7 @@ def Generate_Sequence_Patterns():
 
             # that takes care of the correlation overlap, now need to add additional random indexes up to the current sequence length
             # create a list of all available indexes
+            Index_Set = []
             for z in range(Number_of_Itemsets):
                 Index_Set.append(z)
 
@@ -439,7 +441,7 @@ def Generate_Events():
     Current_Day = Start_Date
     # Event = ["","","","","","",""] (role, user, location, time, date, patient, data, operation) 
     Current_Event = ["","","","","","","",""] 
-    Empty_Event = ["","","","","","","",""] 
+    Empty_Event =   ["","","","","","","",""] 
     Daily_Events = []
     Pattern = []
 
@@ -505,9 +507,9 @@ def Generate_Events():
             Time_Samples.sort() # sort the values to resemble a sequence log
             # add the "T-" string and copy to the events array
             for k in range(len(Time_Samples)):
-                Date_String = "D-" + str(Current_Day.year) + "/" + str(Current_Day.month) + "/" + str(Current_Day.day) 
+                Date_String = str(Current_Day.year) + "/" + str(Current_Day.month) + "/" + str(Current_Day.day) 
                 Time_String = "T-" + str(Time_Samples[k])
-                Current_Event = ["","","",Date_String, Time_String,"","",""]
+                Current_Event = ["","","", Time_String, Date_String,"","",""]
                 Daily_Events.append(Current_Event)
 
 
@@ -520,22 +522,41 @@ def Generate_Events():
             # representing an average of 20% of the events for the day, the rest will be random itemsets
 
             Num_Sequences = int(Average_Events_Per_Day / Average_Sequence_Pattern_Length * Sequence_Saturation)
-            Marker = 0
+            Step_Size = int((len(Daily_Events)) / (Num_Sequences * Average_Sequence_Pattern_Length))
+            Lower_Marker = 0
+            Upper_Marker = Step_Size
 
             for y in range(Num_Sequences):
                 # randomly select a sequence and copy the contents into a temporary local variable 
                 Rnd = random.randint(0, len(Sequence_Patterns)-1)
                 Pattern = Sequence_Patterns[Rnd]
                 for k in range(len(Pattern)):
-                    # randomly insert into event stream, move along randomly through the stream 
-                    Step = Marker + int((len(Daily_Events) - Marker) / (Num_Sequences * Average_Sequence_Pattern_Length))
-                    Event_Index = random.randint(Marker, Step)
+                    # randomly insert into event stream, move along randomly (but roughly evenly) through the stream 
+                    Event_Index = random.randint(Lower_Marker, Upper_Marker)
                     Itemset_Index = Pattern[k]
                     Itemset = Itemsets[Itemset_Index]
-                    Daily_Events[Event_Index] = Itemset
-                    Marker = Step
+                    # can't just copy entire itemset - that will overwrite the time and date which has already been set 
+                    # must do an attribute level copy first from the daily event to the itemset template 
+                    # note: sequence definitions may include times - in this case the sort order will no be preserved - need to sort daily events again before adding to main event structure 
+                    Current_Event = Daily_Events[Event_Index]
+                    
+                    Current_Event[0] = Itemset[0]
+                    Current_Event[1] = Itemset[1]
+                    Current_Event[2] = Itemset[2]
+                    # if the itemset template does not have a time defined then use the time in the current event
+                    if Itemset[3] != "" :
+                        Current_Event[3] = Itemset[3]
+                    # skip 4, it is date and is added to events but does not appear in itemset templates
+                    Current_Event[5] = Itemset[4]
+                    Current_Event[6] = Itemset[5]
+                    Current_Event[7] = Itemset[6]
 
-            # make another pass over the daily events collection and fill in the empty slots with randomly selected itemesets until all slots are full
+                    Daily_Events[Event_Index] = Current_Event
+                     
+                    Lower_Marker = Upper_Marker
+                    Upper_Marker = Upper_Marker + Step_Size
+
+            # make another pass over the daily events collection and fill in the empty slots with randomly selected itemsets until all slots are full
             # need to know how many blank events are left to generate
 
             Events_Remaining = 0
@@ -546,7 +567,8 @@ def Generate_Events():
                 if(Current_Event[0] == ""):  
                     # blank event - either copy one of the defined itemsets at random or use random value sets - random saturation % will decide
                     Events_Remaining = Events_Remaining + 1
-
+            
+            # this is how we decide the proportion of completely random events vs. itemset template events
             Itemset_Events = int(Itemset_Saturation * Events_Remaining)
             Random_Events = Events_Remaining - Itemset_Events
 
@@ -556,7 +578,8 @@ def Generate_Events():
             Event_Low_Time = ""
             Event_High_Time = ""
 
-            # insert itemsets 
+            # insert random itemsets 
+            # remember that itemsets are templates and are not complete, so they need to be filled in 
             while(Itemset_Events > 0):
                 Current_Event = []
                 # randomly pick an itemset
@@ -564,45 +587,61 @@ def Generate_Events():
                 Itemset = Itemsets[Random]
                 # extract the time and find out the start position 
                 Itemset_Time = Itemset[3]
-                for x in range(0,len(Daily_Events)-1):
-                    Current_Event = Daily_Events[x]
-                    Event_Low_Time = Current_Event[3]
-                    # make sure we're not at the last element and therefore would go out of bounds by checking the next element
-                    if(x<len(Daily_Events)-1):
-                        Next_Event = Daily_Events[x+1]
-                        Event_High_Time = Next_Event[3]
 
-                    if(Itemset_Time < Event_Low_Time):  # time is lower than the first element, add an event or overwrite? I think it is safer to add one at the beginning
+                if Itemset_Time != "" :
+                    # time was defined in the itemset template so it may be significant - must preserve it
+                    # the times are already in sorted order - this code inserts the random itemset into the correct slot to preserve the time order
+                    for x in range(0,len(Daily_Events)-1):
+                        Current_Event = Daily_Events[x]
+                        Event_Time = Current_Event[3]
+                                           
+                        # make sure we're not at the last element and therefore would go out of bounds by checking the next element
+                        if(x<len(Daily_Events)-1):
+                            Next_Event = Daily_Events[x+1]
+                            Next_Event_Time = Next_Event[3]
+
                         Current_Event[0] = Itemset[0]
                         Current_Event[1] = Itemset[1]
                         Current_Event[2] = Itemset[2]
-                        # leave [3] alone - it already has the time defined from above
-                        Current_Event[4] = Itemset[4]
-                        Current_Event[5] = Itemset[5]
-                        Current_Event[6] = Itemset[6]
-                        Current_Event[7] = Itemset[7]
-                        # need to insert at beginning - no events with lower time
-                        Daily_Events.insert(0, Current_Event)
-                        # update size variable 
-                        Number_Events_This_Day = Number_Events_This_Day + 1
-                        Itemset_Events = Itemset_Events - 1                    
+                        Current_Event[3] = Itemset[3]
+                        Current_Event[4] = Date_String
+                        Current_Event[5] = Itemset[4]
+                        Current_Event[6] = Itemset[5]
+                        Current_Event[7] = Itemset[6]
+
+                        # three cases - either the time is lower than the first time, somewhere in the middle or higher than the last time 
+                        if(Itemset_Time < Event_Time):  # time is lower than the first element, add an event at the beginning
+                            # need to insert at beginning - no events with lower time
+                            Daily_Events.insert(0, Current_Event)
+                            # update size variable 
+                            Number_Events_This_Day = Number_Events_This_Day + 1
+                            Itemset_Events = Itemset_Events - 1                    
                          
-                    if(Itemset_Time >= Event_Low_Time and Itemset_Time <= Event_High_Time and Current_Event[0] == ""): # we have found the sort position and the current slot is blank
-                        # (role, user, location, time, patient, data, operation)
-                        Current_Event[0] = Itemset[0]
-                        Current_Event[1] = Itemset[1]
-                        Current_Event[2] = Itemset[2]
-                        # leave [3] alone - it already has the time defined from above
-                        Current_Event[4] = Itemset[4]
-                        Current_Event[5] = Itemset[5]
-                        Current_Event[6] = Itemset[6]
-                        Current_Event[7] = Itemset[7]
-                        Daily_Events[Random] = Current_Event
-                        Itemset_Events = Itemset_Events - 1                    
+                        if(Itemset_Time >= Event_Time and Itemset_Time <= Next_Event_Time): # we have found the sort position - need to make sure we're not overwriting an existing event, if so then do an insert
+                            # (role, user, location, time, patient, data, operation)
+                            if Daily_Events[x][0] == "" and Daily_Events[x][1] == "" and Daily_Events[x][2] == "" and Daily_Events[x][5] == "" and Daily_Events[x][6] == "" :
+                                Daily_Events[x] = Current_Event
+                            else:
+                                # insert a new one at the internal location
+                                Daily_Events.insert(x, Current_Event)                     
+                            Itemset_Events = Itemset_Events - 1
 
-                    # the itemsets were templates, i.e. they have empty spaces
-                    # now make sure all of the event attributes are filled in with values
-
+                else : # itemset time was blank, insert in first available location that is unused (no attributes are filled other than time and date)
+                    for x in range(len(Daily_Events)-1):
+                        Current_Event = Daily_Events[x]
+                        if Current_Event[0] == "" and Current_Event[1] == "" and Current_Event[2] == "" and Current_Event[5] == "" and Current_Event[6] == "" :
+                            # looks like an empty event, go ahead and fill in 
+                            Current_Event[0] = Itemset[0]
+                            Current_Event[1] = Itemset[1]
+                            Current_Event[2] = Itemset[2]
+                            # Current_Event[3] = Itemset[3] don't overrite time
+                            Current_Event[4] = Date_String
+                            Current_Event[5] = Itemset[4]
+                            Current_Event[6] = Itemset[5]
+                            Current_Event[7] = Itemset[6]
+                            Daily_Events[x] = Current_Event
+                            Itemset_Events = Itemset_Events - 1
+                            break
 
 
             # insert random events
@@ -623,6 +662,28 @@ def Generate_Events():
                     Daily_Events[Random] = Current_Event                    
                     Random_Events = Random_Events - 1
                  
+            # the itemsets were templates, i.e. they have empty spaces
+            # now make sure all of the event attributes are filled in with values
+            for x in range(len(Daily_Events)):
+                Current_Event = Daily_Events[x]
+                if Current_Event[0] == "":
+                    Current_Event[0] = Roles[random.randint(0, len(Roles)-1)] 
+
+                if Current_Event[1] == "":
+                    Current_Event[1] = Users[random.randint(0, len(Users)-1)] 
+
+                if Current_Event[2] == "":
+                    Current_Event[2] = Locations[random.randint(0, len(Locations)-1)] 
+
+                if Current_Event[5] == "":
+                    Current_Event[5] = Patients[random.randint(0, len(Patients)-1)] 
+
+                if Current_Event[6] == "":
+                    Current_Event[6] = Data[random.randint(0, len(Data)-1)] 
+
+                if Current_Event[7] == "":
+                    Current_Event[7] = Operations[random.randint(0, len(Operations)-1)] 
+
             # copy daily events to main event stream 
             for x in range(len(Daily_Events)):
                 Events.append(Daily_Events[x])
@@ -664,62 +725,6 @@ def Generate_Events():
 #	//     exceptions   
 #		//	end for   
 #
-
-
-def Fill_Attributes():
-    
-    global Itemsets
-
-    global Roles
-    global Users
-    global Locations
-    global Times
-    global Patients
-    global Data
-    global Operations
-
-
-    for x in range(len(Itemsets)):
-        Fill_Itemset = Itemsets[x]
-        # for each event fill in with random attributes until desired number is achieved        
-        if(Fill_Itemset[0] == "") :
-            # Role is empty, select a random one
-            z = random.randint(0, len(Roles)-1)
-            Fill_Itemset[0] = Roles[z]
-
-        if(Fill_Itemset[1] == "") :
-            # User is empty, select a random one
-            z = random.randint(0, len(Users)-1)
-            Fill_Itemset[1] = Users[z]
-
-        if(Fill_Itemset[2] == "") :
-            # Location is empty, select a random one
-            z = random.randint(0, len(Locations)-1)
-            Fill_Itemset[2] = Locations[z]
-
-        if(Fill_Itemset[3] == "") :
-            # Time is empty, select a random one
-            z = random.randint(0, len(Times)-1)
-            Fill_Itemset[3] = Times[z]
-
-        if(Fill_Itemset[4] == "") :
-            # User is empty, select a random one
-            z = random.randint(0, len(Patients)-1)
-            Fill_Itemset[4] = Patients[z]
-
-        if(Fill_Itemset[5] == "") :
-            # User is empty, select a random one
-            z = random.randint(0, len(Data)-1)
-            Fill_Itemset[5] = Data[z]
-
-        if(Fill_Itemset[6] == "") :
-            # User is empty, select a random one
-            z = random.randint(0, len(Operations)-1)
-            Fill_Itemset[6] = Operations[z]
-
-    Itemsets[x] = Fill_Itemset
-
-
 
 # define global variable for simulation 
 # these values will eventually be extracted from the UI
