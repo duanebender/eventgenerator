@@ -40,7 +40,7 @@ Number_of_Sequence_Patterns = 100
 Sequence_Pattern_Correlation = 0.4
 Average_Sequence_Pattern_Length = 3
 User_Defined_Sequence_Patterns = [[0,1],[0,2]]
-
+# TODO set debug level and print parms
 
 # simulation parameters
 # day/month/year
