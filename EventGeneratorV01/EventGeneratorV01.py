@@ -544,8 +544,10 @@ def Generate_Events():
                     Current_Event[1] = Itemset[1]
                     Current_Event[2] = Itemset[2]
                     # if the itemset template does not have a time defined then use the time in the current event
-                    if Itemset[3] != "" :
-                        Current_Event[3] = Itemset[3]
+                    # PROBLEM : need to sort-insert the time (or drop the time) here otherwise it throws time off
+                    # for now do not copy the times from the sequence patterns -- need to think about this algorithm 
+                    #if Itemset[3] != "" :
+                    #    Current_Event[3] = Itemset[3]
                     # skip 4, it is date and is added to events but does not appear in itemset templates
                     Current_Event[5] = Itemset[4]
                     Current_Event[6] = Itemset[5]
@@ -599,6 +601,8 @@ def Generate_Events():
                         if(x<len(Daily_Events)-1):
                             Next_Event = Daily_Events[x+1]
                             Next_Event_Time = Next_Event[3]
+                        else:
+                            Next_Event_Time = "T-1000000"
 
                         Current_Event[0] = Itemset[0]
                         Current_Event[1] = Itemset[1]
@@ -613,17 +617,18 @@ def Generate_Events():
                         if(Itemset_Time < Event_Time):  # time is lower than the first element, add an event at the beginning
                             # need to insert at beginning - no events with lower time
                             Daily_Events.insert(0, Current_Event)
-                            print("inserted " + Current_Event[3] + " at position 0")  
+                            #print("inserted " + Current_Event[3] + " at position 0")  
                             # then delete an empty event 
                             for z in range(len(Daily_Events)-1):
                                 Delete_Event = Daily_Events[z]
                                 if(Delete_Event[0] == "" and Delete_Event[1] == "" and Delete_Event[2] == "" and Delete_Event[5] == "" and Delete_Event[6] == "" and Delete_Event[7] == ""):
                                     Daily_Events.pop(z)
-                                    print("deleted event at position " + str(z))
+                                    #print("deleted event at position " + str(z))
                                     break
 
                             Itemset_Events = Itemset_Events - 1                    
-                         
+                            break
+                                                 
                         if(Itemset_Time >= Event_Time and Itemset_Time <= Next_Event_Time): # we have found the sort position - need to make sure we're not overwriting an existing event, if so then do an insert
                             # (role, user, location, time, patient, data, operation)
                             if Daily_Events[x][0] == "" and Daily_Events[x][1] == "" and Daily_Events[x][2] == "" and Daily_Events[x][5] == "" and Daily_Events[x][6] == "" and Daily_Events[x][7] == "" :
@@ -631,17 +636,17 @@ def Generate_Events():
                             else:
                                 # insert a new one at the internal location
                                 Daily_Events.insert(x, Current_Event)
-                                print("inserted " + Current_Event[3] + " at position " + str(x))  
+                                #print("inserted " + Current_Event[3] + " at position " + str(x))  
                                 # then delete an empty event 
                                 for z in range(len(Daily_Events)-1):
                                     Delete_Event = Daily_Events[z]
                                     if(Delete_Event[0] == "" and Delete_Event[1] == "" and Delete_Event[2] == "" and Delete_Event[5] == "" and Delete_Event[6] == "" and Delete_Event[7] == ""):
                                         Daily_Events.pop(z)
-                                        print("deleted event at position " + str(z))
+                                        #print("deleted event at position " + str(z))
                                         break
                                                      
                             Itemset_Events = Itemset_Events - 1
-
+                            break
                 else : # itemset time was blank, insert in first available location that is unused (no attributes are filled other than time and date)
                     for x in range(len(Daily_Events)-1):
                         Current_Event = Daily_Events[x]
@@ -659,24 +664,6 @@ def Generate_Events():
                             Itemset_Events = Itemset_Events - 1
                             break
 
-
-            # insert remaining events 
-            #while(Random_Events > 0):
-            #    Random = random.randint(0, len(Daily_Events)-1)
-            #    Current_Event = Daily_Events[Random]
-            #    if (Current_Event[0] == ""):
-                    # found one, fill it in with random values except time (time already defined)
-                    # (role, user, location, time, patient, data, operation)
-            #        Current_Event[0] = Roles[random.randint(0, len(Roles)-1)]
-             #       Current_Event[1] = Users[random.randint(0, len(Users)-1)]
-              #      Current_Event[2] = Locations[random.randint(0, len(Locations)-1)]
-                    # leave [3] alone - it already has the time defined from above
-               #     Current_Event[4] = Date_String # todays date
-                #    Current_Event[5] = Patients[random.randint(0, len(Patients)-1)]
-                 #   Current_Event[6] = Data[random.randint(0, len(Data)-1)]
-                  #  Current_Event[7] = Operations[random.randint(0, len(Operations)-1)]
-                   # Daily_Events[Random] = Current_Event                    
-                    #Random_Events = Random_Events - 1
 
             # fill in any remaining attributes with random values      
             # the itemsets were templates, i.e. they have empty spaces
