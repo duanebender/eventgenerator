@@ -1,10 +1,14 @@
 import random
 import sys
 import datetime
+import time
+import datetime
 
-print('Event Generator Version 0.0.7')
-print('1/19/2015\n')
+print('Event Generator Version 0.0.9')
+print('updated 1/21/2015\n')
 print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
+
+Timestamp1 = time.time()
 
 # TODO: define a debug level 
 # TODO: print simulation parameters
@@ -29,10 +33,10 @@ Number_of_Operations = 0
 # itemset parameters
 Itemsets = []
 Number_of_Itemsets = 1000
-Itemset_Correlation = 0
+Itemset_Correlation = 0.2
 Average_Itemset_Length = 3
 User_Defined_Itemsets = [["R-1","U-99", "", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", "", ""], ["R-2","U-2","","T-520","","","",""]]
-Itemset_Saturation = 0.2 # this is the itemset random saturation % (range 0.0 -> 1.0) (ie when generating events use 20% defined itemsets and 80% completely random events) 
+Itemset_Saturation = 0.3 # this is the itemset random saturation % (range 0.0 -> 1.0) (ie when generating events use 20% defined itemsets and 80% completely random events) 
 
 # sequence pattern parameters
 Sequence_Patterns = []
@@ -45,15 +49,34 @@ User_Defined_Sequence_Patterns = [[0,1],[0,2]]
 # simulation parameters
 # day/month/year
 Events = []
-Start_Date = datetime.date(2015, 2, 12)
+Start_Date = datetime.date(2015, 1, 1)
 Start_Time = datetime.time(0, 0, 0)
-End_Date = datetime.date(2015, 2, 16)
+End_Date = datetime.date(2015, 3, 31)
 End_Time = datetime.time(23, 59, 59)
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 250
+Average_Events_Per_Day = 1500
 Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
+Now = datetime.datetime.now()
+print("Run Date : " + str(Now))
+print("")
+print("Simulation parameters:")
+print()
+print("    Itemsets:") 
+print("        Number of Itemsets              : " + str(Number_of_Itemsets))
+print("        Itemset Correlation             : " + str(Itemset_Correlation))
+print("        Average Itemset Length          : " + str(Average_Itemset_Length))
+print()
+print("    Sequence Patterns:")
+print("        Number of Sequence Patterns     : " + str(Number_of_Sequence_Patterns))
+print("        Sequence Pattern Correlation    : " + str(Sequence_Pattern_Correlation))
+print("        Average Sequence Pattern Length : " + str(Average_Sequence_Pattern_Length))
+print()
+print("    Events:")
+print("        Average Events Per Day          : " + str(Average_Events_Per_Day))
+print("        Sequence_Saturation             : " + str(Sequence_Saturation))
+print()
 
 def Load_ValueSets():
     "Procedure to load valuesets for each attribute"
@@ -300,7 +323,7 @@ def Generate_Itemsets():
             if Current_Itemset[x] != "" :
                 Attribute_Count = Attribute_Count + 1
     Average_Attributes = Attribute_Count / len(Itemsets)
-    print("Average itemset length (desired / actual) = (" + str(Average_Itemset_Length) + " / " + str(Average_Attributes) + ")" )
+    # print("Average itemset length (desired / actual) = (" + str(Average_Itemset_Length) + " / " + str(Average_Attributes) + ")" )
     print()
 
     
@@ -691,8 +714,8 @@ def Generate_Events():
             # copy daily events to main event stream 
             for x in range(len(Daily_Events)):
                 Events.append(Daily_Events[x])
-            print()
-            print("Target events this day / Actual Events Generated : (" + str(Average_Events_Per_Day) + " / " + str(len(Daily_Events)) + ")") 
+            #print()
+            #print("Target events this day / Actual Events Generated : (" + str(Average_Events_Per_Day) + " / " + str(len(Daily_Events)) + ")") 
 
         # increment day counter to next day 
         Current_Day = Current_Day + datetime.timedelta(1,0,0,0,0,0,0)
@@ -701,6 +724,10 @@ def Generate_Events():
     print()
     for x in range(len(Events)):
         print(Events[x])
+    Timestamp2 = time.time()
+    Time_Delta = Timestamp2 - Timestamp1
+    print(str(len(Events)) + " events generated in %.2f" % Time_Delta + " seconds.")
+
 
 
     
