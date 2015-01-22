@@ -4,31 +4,41 @@ import datetime
 import time
 import datetime
 
-print('Event Generator Version 0.0.9')
-print('updated 1/21/2015\n')
-print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
+
+# define a debug level
+
+# 0 = quiet (display output events only)
+# 1 = minimal (events plus error messages) 
+# 2 = normal (headers, events and errors)
+# 3 = detailed (everything but not debugging messages)
+# 4 = diagnostic (everything including debugging messages) 
+
+Verbosity = 2
+
+if(Verbosity > 0):
+    print('Event Generator Version 0.0.9')
+    print('updated 1/21/2015\n')
+    print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
 
 Timestamp1 = time.time()
-
-# TODO: define a debug level 
-# TODO: print simulation parameters
+  
 # declare global parameters
 
 # Value set parameters
 Roles = []
-Number_of_Roles = 0
+Number_of_Roles = 5
 Users = []
-Number_of_Users = 0
+Number_of_Users = 200
 Locations = []
-Number_of_Locations = 0
+Number_of_Locations = 10
 Times = []
 Number_of_Times = 0
 Patients = []
-Number_of_Patients = 0
+Number_of_Patients = 40000
 Data = []
-Number_of_Data = 0
+Number_of_Data = 400000
 Operations = []
-Number_of_Operations = 0
+Number_of_Operations = 12
 
 # itemset parameters
 Itemsets = []
@@ -55,38 +65,59 @@ End_Date = datetime.date(2015, 3, 31)
 End_Time = datetime.time(23, 59, 59)
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 1500
+Average_Events_Per_Day = 2500 # 90 days * 2500 events / day  = 200,000 events
 Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 Now = datetime.datetime.now()
-print("Run Date : " + str(Now))
-print("")
-print("Simulation parameters:")
-print()
-print("    Itemsets:") 
-print("        Number of Itemsets              : " + str(Number_of_Itemsets))
-print("        Itemset Correlation             : " + str(Itemset_Correlation))
-print("        Average Itemset Length          : " + str(Average_Itemset_Length))
-print()
-print("    Sequence Patterns:")
-print("        Number of Sequence Patterns     : " + str(Number_of_Sequence_Patterns))
-print("        Sequence Pattern Correlation    : " + str(Sequence_Pattern_Correlation))
-print("        Average Sequence Pattern Length : " + str(Average_Sequence_Pattern_Length))
-print()
-print("    Events:")
-print("        Average Events Per Day          : " + str(Average_Events_Per_Day))
-print("        Sequence_Saturation             : " + str(Sequence_Saturation))
-print()
+if(Verbosity>1):
+    print("Run Date : " + str(Now))
+    print("")
+    print("Simulation parameters:")
+    print()
+    print("    Value sets:")
+    print("        Number of Users                 : " + str(Number_of_Users))
+    print("        Number of Roles                 : " + str(Number_of_Roles))
+    print("        Number of Locations             : " + str(Number_of_Locations))
+    print("        Number of Patients              : " + str(Number_of_Patients))
+    print("        Number of Data Elements         : " + str(Number_of_Data))
+    print("        Number of Operations            : " + str(Number_of_Operations))
+    print()
+    print("    Itemsets:") 
+    print("        Number of Itemsets              : " + str(Number_of_Itemsets))
+    print("        Itemset Correlation             : " + str(Itemset_Correlation))
+    print("        Average Itemset Length          : " + str(Average_Itemset_Length))
+    print()
+    print("    Sequence Patterns:")
+    print("        Number of Sequence Patterns     : " + str(Number_of_Sequence_Patterns))
+    print("        Sequence Pattern Correlation    : " + str(Sequence_Pattern_Correlation))
+    print("        Average Sequence Pattern Length : " + str(Average_Sequence_Pattern_Length))
+    print()
+    print("    Events:")
+    print("        Average Events Per Day          : " + str(Average_Events_Per_Day))
+    print("        Sequence_Saturation             : " + str(Sequence_Saturation))
+    print()
 
 def Load_ValueSets():
     "Procedure to load valuesets for each attribute"
     global Roles
+    global Number_of_Roles
+    
     global Users
+    global Number_of_Users
+
     global Locations
+    global Number_of_Locations
+
     global Times
+
     global Patients
+    global Number_of_Patients
+
     global Data
+    global Number_of_Data
+
     global Operations
+    global Number_of_Operations
 
     # TODO: create User_Defined_Roles array, copy that into roles value set first then autgenerte roles up to NumberOFRoles
     Roles = ["R-1", "R-2"]
@@ -96,7 +127,47 @@ def Load_ValueSets():
     Patients = ["P-1", "P-2"]
     Data = ["D-1", "D-2"]
     Operations = ["O-1", "O-2"]
+
+    namespace = "4444"
      
+    if(len(Roles) < Number_of_Roles):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Roles), Number_of_Roles-1):
+            Role = str("R-" + str(namespace) + str(x))
+            Roles.insert(x, Role)
+
+    if(len(Users) < Number_of_Users):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Users), Number_of_Users-1):
+            User = str("U-" + str(namespace) + str(x))
+            Users.insert(x, User)
+
+    if(len(Locations) < Number_of_Locations):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Locations), Number_of_Locations-1):
+            Location = str("L-" + str(namespace) + str(x))
+            Locations.insert(x, Location)
+
+    if(len(Patients) < Number_of_Patients):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Patients), Number_of_Patients-1):
+            Patient = str("P-" + str(namespace) + str(x))
+            Patients.insert(x, Patient)
+
+    if(len(Data) < Number_of_Data):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Data), Number_of_Data-1):
+            DataString = str("D-" + str(namespace) + str(x))
+            Data.insert(x, DataString)
+
+    if(len(Operations) < Number_of_Operations):
+        # how to avoid collisions? use a random prefix? 
+        for x in range(len(Operations), Number_of_Operations-1):
+            Operation = str("O-" + str(namespace) + str(x))
+            Operations.insert(x, Operation)
+
+
+
 
 def Load_Parameters():
     "Procedure to load simulation parameters"
@@ -117,8 +188,9 @@ def Load_Parameters():
 
 def Generate_Itemsets():
     "Procedure which generates itemset templates"
-    sys.stdout.write("Generating " + str(Number_of_Itemsets) + " itemsets...") 
-    sys.stdout.flush()
+    if (Verbosity>2):
+        sys.stdout.write("Generating " + str(Number_of_Itemsets) + " itemsets...") 
+        sys.stdout.flush()
 
     # TODO: make more configurable - i.e. should be able to set number of attributes and name them dynamically (other than time and date)
     global Roles
@@ -159,8 +231,9 @@ def Generate_Itemsets():
     #Fill_Attributes()
     
     for x in range(len(Itemsets), Number_of_Itemsets): # need to account for Itemsets already added as user defined itemsets, i.e. begin creating templates at end of predefined template area and continue to max number 
-        sys.stdout.write(".") # progress indicator
-        sys.stdout.flush()
+        if(Verbosity>2):
+            sys.stdout.write(".") # progress indicator
+            sys.stdout.flush()
         
         attributes_copied = 0
 
@@ -187,7 +260,11 @@ def Generate_Itemsets():
             for y in range(0, Random_Number_of_Attributes): # this value is for the correlated attributes with the previous itemset, then we need to add the random values 
                 # randomly pick attributes by index (number between 0 and 6 (7 attributes total for atna model))
                 # keep going until they are all done (no way to know since we are randomly selecting and we may repeat the same attribute, that is the reason for the while 1 stmt
+                safety = 0
                 while 1: 
+                    safety = safety + 1
+                    if safety == 50 :
+                        break # try 50 times to randomly select and copy attributes, if it doesn't happen, move on
                     if attributes_copied >= random_itemset_size:   # can only copy as many attributes as are available in the selected itemset (prevent endless loop, etc) 
                         break
                     attribute_index = random.randint(0, Number_of_Attributes-1) # pick a number between 0 and 6 - this is the array index of the attribute to copy 
@@ -314,21 +391,23 @@ def Generate_Itemsets():
         # calculate cumulative probabilities 	
 
     # show itemset list for debugging purposes
-    print()
-    Attribute_Count = 0
+
+    if(Verbosity>2):
+        print()
+    #Attribute_Count = 0
     for x in range(len(Itemsets)):
-        print(Itemsets[x])
-        Current_Itemset = Itemsets[x]
-        for x in range (0, len(Current_Itemset)) :
-            if Current_Itemset[x] != "" :
-                Attribute_Count = Attribute_Count + 1
-    Average_Attributes = Attribute_Count / len(Itemsets)
+        if(Verbosity>2):
+            print(Itemsets[x])
+    #    Current_Itemset = Itemsets[x]
+    #    for x in range (0, len(Current_Itemset)) :
+    #        if Current_Itemset[x] != "" :
+    #            Attribute_Count = Attribute_Count + 1
+    # Average_Attributes = Attribute_Count / len(Itemsets)
     # print("Average itemset length (desired / actual) = (" + str(Average_Itemset_Length) + " / " + str(Average_Attributes) + ")" )
-    print()
+    #if(Verbosity>1):
+    #    print()
 
-    
-
-
+   
 
 
 def Generate_Sequence_Patterns():
@@ -351,8 +430,9 @@ def Generate_Sequence_Patterns():
     global Sequence_Patterns
     global User_Defined_Sequence_Patterns
 
-    sys.stdout.write("Generating " + str(Number_of_Sequence_Patterns) + " sequence patterns...")
-    sys.stdout.flush()
+    if(Verbosity>2):
+        sys.stdout.write("Generating " + str(Number_of_Sequence_Patterns) + " sequence patterns...")
+        sys.stdout.flush()
 
     Index_Set = []
     Current_Sequence_Pattern = []
@@ -363,8 +443,9 @@ def Generate_Sequence_Patterns():
     Lower = len(Sequence_Patterns)
     # then randomly generate the rest based on the parameters
     for x in range(Lower, Number_of_Sequence_Patterns):
-        sys.stdout.write(".")
-        sys.stdout.flush()
+        if(Verbosity>2):
+            sys.stdout.write(".")
+            sys.stdout.flush()
 
         # reset local pattern
         Current_Sequence_Pattern = []
@@ -440,17 +521,19 @@ def Generate_Sequence_Patterns():
         # calculate cumulative probabilities 	
 
     # show itemset list for debugging purposes
-    print() 
-    for x in range(len(Sequence_Patterns)):
-        print(Sequence_Patterns[x])
-    print()
+    if(Verbosity>2):
+        print()
+        for x in range(len(Sequence_Patterns)):
+            print(Sequence_Patterns[x])
+        print()
 
 
 
 def Generate_Events():
     "Procedure which generates events from the pattern templates"
-    sys.stdout.write("Generating events....")
-    sys.stdout.flush()
+    if(Verbosity > 2):
+        sys.stdout.write("Generating events....")
+        sys.stdout.flush()
 
     global Start_Date
     global End_Date
@@ -477,8 +560,9 @@ def Generate_Events():
     # e.g. since there are day of week exclusions, make sure current day is an event day (i.e. Sundays could be blocked off) if it is a blocked day then skip to next day
 
     while Current_Day <= End_Date:
-        sys.stdout.write(".")
-        sys.stdout.flush()
+        if(Verbosity>2):
+            sys.stdout.write(".")
+            sys.stdout.flush()
 
         Current_Event = [] 
         Day = Current_Day.weekday()
@@ -580,6 +664,8 @@ def Generate_Events():
                      
                     Lower_Marker = Upper_Marker
                     Upper_Marker = Upper_Marker + Step_Size
+                    if(Upper_Marker > (len(Daily_Events)-1)):
+                        Upper_Marker = len(Daily_Events)-1
 
             # make another pass over the daily events collection and fill in the empty slots with randomly selected itemsets until all slots are full
             # need to know how many blank events are left to generate
@@ -721,13 +807,17 @@ def Generate_Events():
         Current_Day = Current_Day + datetime.timedelta(1,0,0,0,0,0,0)
 
     # show event list for debugging purposes
-    print()
-    for x in range(len(Events)):
-        print(Events[x])
-    Timestamp2 = time.time()
-    Time_Delta = Timestamp2 - Timestamp1
-    print(str(len(Events)) + " events generated in %.2f" % Time_Delta + " seconds.")
+    if(Verbosity>2):
+        print()
+        for x in range(len(Events)):
+            print(Events[x])
+        Timestamp2 = time.time()
+        Time_Delta = Timestamp2 - Timestamp1
+        print(str(len(Events)) + " events generated in %.2f" % Time_Delta + " seconds.")
 
+    else:
+        for x in range(len(Events)):
+            print(Events[x][0] + "," + Events[x][1] + "," + Events[x][2] + "," + Events[x][3] + "," + Events[x][5] + "," + Events[x][6] + "," + Events[x][7])
 
 
     
