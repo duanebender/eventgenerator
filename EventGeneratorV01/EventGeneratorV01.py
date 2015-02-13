@@ -13,7 +13,7 @@ import datetime
 # 3 = detailed (everything but not debugging messages)
 # 4 = diagnostic (everything including debugging messages) 
 
-Verbosity = 2
+Verbosity = 4
 
 if(Verbosity > 0):
     print('Event Generator Version 0.0.9')
@@ -36,7 +36,7 @@ Number_of_Times = 0
 Patients = []
 Number_of_Patients = 40000
 Data = []
-Number_of_Data = 400000
+Number_of_Data = 2000000
 Operations = []
 Number_of_Operations = 12
 
@@ -53,7 +53,7 @@ Sequence_Patterns = []
 Number_of_Sequence_Patterns = 100
 Sequence_Pattern_Correlation = 0.4
 Average_Sequence_Pattern_Length = 3
-User_Defined_Sequence_Patterns = [[0,1],[0,2]]
+User_Defined_Sequence_Patterns = [[0,1],[0,2,1]]
 # TODO set debug level and print parms
 
 # simulation parameters
@@ -61,11 +61,11 @@ User_Defined_Sequence_Patterns = [[0,1],[0,2]]
 Events = []
 Start_Date = datetime.date(2015, 1, 1)
 Start_Time = datetime.time(0, 0, 0)
-End_Date = datetime.date(2015, 3, 31)
+End_Date = datetime.date(2015, 4, 10) # about 100 days
 End_Time = datetime.time(23, 59, 59)
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 2500 # 90 days * 2500 events / day  = 200,000 events
+Average_Events_Per_Day = 25 # load test -> 100 days * 25000 events / day  = 2,500,000 events
 Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 Now = datetime.datetime.now()
@@ -263,8 +263,8 @@ def Generate_Itemsets():
                 safety = 0
                 while 1: 
                     safety = safety + 1
-                    if safety == 50 :
-                        break # try 50 times to randomly select and copy attributes, if it doesn't happen, move on
+                    if safety == 100 :
+                        break # try 100 times to randomly select and copy attributes, if it doesn't happen, move on
                     if attributes_copied >= random_itemset_size:   # can only copy as many attributes as are available in the selected itemset (prevent endless loop, etc) 
                         break
                     attribute_index = random.randint(0, Number_of_Attributes-1) # pick a number between 0 and 6 - this is the array index of the attribute to copy 
@@ -470,12 +470,10 @@ def Generate_Sequence_Patterns():
                 Sequence_Correlation_Overlap = Previous_Sequence_Length
 
             # create a structure of the indexes to select from
+            # note there are no empty spaces in sequence patterns as there are in itemsets
             for y in range(Sequence_Correlation_Overlap):
-                # copy the index values from previous sequence
+                # copy up to overlap index values from previous sequence
                 Index_Set.append(Previous_Sequence_Set[y])
-            
-            #randomize the list of indexes (why am i randomizing? that seems to ruin the sequence pattern)
-            #random.shuffle(Index_Set)
              
             #for y in range(Sequence_Correlation_Overlap) : 
             #    Index = int(Index_Set.pop(0))
@@ -483,12 +481,14 @@ def Generate_Sequence_Patterns():
 
             # that takes care of the correlation overlap, now need to add additional random indexes up to the current sequence length
             # create a list of all available indexes
+            # TODO: seems to be a bug here - the next line erases the index_set that was set up just above here - need to figure out what is going on 
             Index_Set = []
             for z in range(Number_of_Itemsets):
                 Index_Set.append(z)
 
             random.shuffle(Index_Set)
 
+            # TODO: also seems to be a bug here - y is not used as a parameter anywhere to select a different entry
             for y in range(len(Current_Sequence_Pattern), Current_Sequence_Length):
                 Index = int(Index_Set.pop(0))
                 Current_Sequence_Pattern.append(Index)
@@ -810,47 +810,17 @@ def Generate_Events():
     if(Verbosity>2):
         print()
         for x in range(len(Events)):
-            print(Events[x])
+            print("E-" + str(x) + "," + Events[x][0] + "," + Events[x][1] + "," + Events[x][2] + "," + Events[x][3] + "," + Events[x][5] + "," + Events[x][6] + "," + Events[x][7])        
         Timestamp2 = time.time()
         Time_Delta = Timestamp2 - Timestamp1
         print(str(len(Events)) + " events generated in %.2f" % Time_Delta + " seconds.")
 
     else:
         for x in range(len(Events)):
-            print(Events[x][0] + "," + Events[x][1] + "," + Events[x][2] + "," + Events[x][3] + "," + Events[x][5] + "," + Events[x][6] + "," + Events[x][7])
+            print("E-" + str(x) + "," + Events[x][0] + "," + Events[x][1] + "," + Events[x][2] + "," + Events[x][3] + "," + Events[x][5] + "," + Events[x][6] + "," + Events[x][7])
 
 
     
-
-#   //
-#		// // since this is about user behaviour, start by selecting user...
-#		// User
-#		// if not already assigned from copy function above, randomly select user
-#		//    	from users using probability distribution
-#		// Role
-
-
-
-#		// if not already assigned from itemset correlatin above, look in relations 
-#				collection for a relationship between this user and role values 
-#		// if exists, make a temporary copy of the roles collection
-#		//	change the probability value in the roles collection to the value found 
-#			in the set of relations
-#		// look for any relation values of 0 in the relations set for this user and
-#			a particular role, delete those roles from the temporary roles collection
-#		// from the remaining modified set of roles, select one at random and assign 
-#			it
-#		//  REPEAT above steps for location, operation, resources, patient, 
-#			sessionid, emergency, modality
-#		 
-#	//   make a pass over the structure to assign the events times
-#	//     according to the time distribution function and time of day 
-#	//     exceptions   
-#		//	end for   
-#
-
-# define global variable for simulation 
-# these values will eventually be extracted from the UI
 
 # initialize the list of itemsets
 Itemsets = []
