@@ -107,6 +107,7 @@ def Load_ValueSets():
 
     global Locations
     global Number_of_Locations
+    # wrt Locations - consider splitting the concept into 2 - to capture both "terminal id/device id" and "geographic location" 
 
     global Times
 
