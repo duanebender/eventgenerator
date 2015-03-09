@@ -3,7 +3,7 @@ import sys
 import datetime
 import time
 import datetime
-
+import json
 
 # define a debug level
 
@@ -26,23 +26,23 @@ Timestamp1 = time.time()
 
 # Value set parameters
 Roles = []
-Number_of_Roles = 5
+Number_of_Roles = 1
 Users = []
-Number_of_Users = 200
+Number_of_Users = 2
 Locations = []
 Number_of_Locations = 10
 Times = []
 Number_of_Times = 0
 Patients = []
-Number_of_Patients = 40000
+Number_of_Patients = 4
 Data = []
-Number_of_Data = 2000000
+Number_of_Data = 20
 Operations = []
 Number_of_Operations = 12
 
 # itemset parameters
 Itemsets = []
-Number_of_Itemsets = 1000
+Number_of_Itemsets = 10
 Itemset_Correlation = 0.2
 Average_Itemset_Length = 3
 User_Defined_Itemsets = [["R-1","U-99", "", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", "", ""], ["R-2","U-2","","T-520","","","",""]]
@@ -50,11 +50,19 @@ Itemset_Saturation = 0.3 # this is the itemset random saturation % (range 0.0 ->
 
 # sequence pattern parameters
 Sequence_Patterns = []
-Number_of_Sequence_Patterns = 100
+Number_of_Sequence_Patterns = 1
 Sequence_Pattern_Correlation = 0.4
 Average_Sequence_Pattern_Length = 3
 User_Defined_Sequence_Patterns = [[0,1],[0,2,1]]
-# TODO set debug level and print parms
+
+# user behaviour patterns
+# Note: these are encoded identically as sequence patterns but they are kept seperate because they receive special treatment when generating events
+Behaviour_Patterns = []
+Behaviour_Patterns_Support = []
+Number_of_Behaviour_Patterns = 0
+Average_Behaviour_Pattern_Length = 0
+# Note: these behaviour patterns are loaded from a JSON file called the behaviour pattern repository 
+User_Defined_Behaviour_Patterns = []
 
 # simulation parameters
 # day/month/year
@@ -130,6 +138,9 @@ def Load_ValueSets():
     Operations = ["O-1", "O-2"]
 
     namespace = "4444"
+
+    # note: loading behsviour patterns also adds values to the value set collections of roles, users etc. 
+    Load_Behaviour_Patterns()
      
     if(len(Roles) < Number_of_Roles):
         # how to avoid collisions? use a random prefix? 
@@ -169,6 +180,112 @@ def Load_ValueSets():
 
 
 
+def Load_Behaviour_Patterns():
+    "Procedure to parse behaviour pattern repository and insert sequence patterns into behaviour pattern array"
+
+    global Roles
+    global Locations
+    global Behaviour_Patterns 
+    global Behaviour_Patterns_Support
+
+    # open JSON file and import into a python object that can be easily parsed 
+    # TODO:: add some error handling
+    json_data = open('UserBehaviourPatternRepository.json')
+    data = json.load(json_data)
+    if(Verbosity>3):
+        print("User Behaviour Pattern Repository json encoding... \n" + str(data) + "\n...end User Behaviour Pattern Repository json encoding\n " )
+
+    # TODO: begin with case examples, eventually working towards a general purpose loader 
+    Pattern = {} # extracted pattern from JSON file, type of dictionary 
+    Behaviour_Patterns = []
+    Role_Actor = ""
+
+    for r in range(len(data)): # each pattern is an element of an array in the json file. Each element of the array is a dictionary of the attributes and values of the pattern description 
+        Pattern = data[r] # load the first pattern dictionary into Pattern variable
+        # reset any variables that are individual pattern scope
+        Behaviour_Pattern = []
+        Support = 0
+        Actor = ""
+        Role_Actor = ""
+        User_Actor = ""
+        for attribute in Pattern: # cycle through each key in the Pattern dictionary for this specific pattern
+            # if actors are found, add them to the value set 
+            if attribute == "actor":
+                Actor = Pattern['actor']
+                # add each actor to the appropriate value set
+                # TODO: give them a normalized value eg R-3 
+                for key in Actor:
+                    # Look for Role actors
+                    if(key == "role"):
+                        Role_Actor = Actor['role']
+                        #if(Role_Actor != ""):
+                            # TODO : check existing set of Roles for value collision (ie check if already exists before adding)
+                            # or should this be added to the main roles collection at all?
+                            # Roles.append(Role_Actor)
+                            # add the role actor as the role in each step of the sequence at the end since we can't guarantee that the sequence has already been constucted at this point
+                    # User
+                    if(key == "user"):
+                        User_Actor = Actor['user']
+                        if(User_Actor != ""):
+                            Users.append(User_Actor)
+                    
+                    # Organization 
+                    # TODO:: Note: we currently do not support the concept of organization
+            #elif attribute == "id":
+                # do nothing
+            elif attribute == "sequence":
+                # Event = ["","","","","","",""] (role, user, location, time, patient, data, operation) 
+
+                # create a sequence pattern for this behaviour 
+                # the number of elements in the sequence structure maps to the number of steps in the sequence 
+                # make sure all of the values in the sequence also appear in the appropriate value sets as well
+                Sequence = Pattern['sequence'] # result is an array in sequence
+                for s in range(len(Sequence)): # for each step in the sequence
+                    Step = Sequence[s] # step is a dictionary
+                    Behaviour_Step = ["","","","","","",""]
+                    for key in Step: # for each defined item in the sequence step
+                        # create an itemset for each step in sequence
+                        # TODO : there is a potential conflict here - we are defining role in the actor section and potentially the sequence section as well - in conflict which one presides? 
+                        if key == "role":
+                            Behaviour_Step[0] = Step['role']
+                        if key == "user":
+                            Behaviour_Step[1] = Step['user']
+                        if key == "location":
+                            Behaviour_Step[2] = Step['location']
+                        if key == "patient":
+                            Behaviour_Step[4] = Step['patient']
+                        if key == "resource":  # note: data and resource are equivalent - this program uses the term data however the config file uses resource 
+                            Behaviour_Step[5] = Step['resource']
+                        if key == "operation":
+                            Behaviour_Step[6] = Step['operation']
+                    # TODO:: need to normalize values to what appears in the value set
+                    if (Behaviour_Step[0] == "" and Role_Actor != ""): # if role is not defined in the sequence already but role actor was defined then assign role actor as the role (behaviour step takes precedence)
+                        Behaviour_Step[0] = Role_Actor
+                    Behaviour_Pattern.append(Behaviour_Step)
+                #print(Behaviour_Itemsets)
+
+                                                       
+            elif attribute == "support":
+                Support = Pattern['support']
+                
+            elif attribute == "context":
+                Context = Pattern['context']           
+             
+            if(Verbosity>=4):
+                print("Attribute: " + attribute + " Value: " + str(Pattern[attribute]))
+            if(Verbosity<4):
+                if attribute == "id":
+                    print("Loading behaviour pattern id : " + Pattern['id'] )
+                if attribute == "description":
+                    print("Pattern description          : " + Pattern['description'])
+        # finished parsing the behaviour block for the attributes - the sequence will be added into the event stream when generating events
+        
+        Behaviour_Patterns.append(Behaviour_Pattern)
+        Behaviour_Patterns_Support.append(Support)
+
+    if(Verbosity>0):
+        for r in range(len(Behaviour_Patterns)):
+            print(str(Behaviour_Patterns[r]) + "\n")
 
 def Load_Parameters():
     "Procedure to load simulation parameters"

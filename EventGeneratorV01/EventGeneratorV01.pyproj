@@ -24,5 +24,8 @@
   <ItemGroup>
     <Compile Include="EventGeneratorV01.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="UserBehaviourPatternRepository.json" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
 </Project>

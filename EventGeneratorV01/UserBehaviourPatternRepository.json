@@ -1,0 +1,84 @@
+[
+    {
+        "id": "P-00001",
+        "description": "80% of nurse in Hospital-A works at two locations in order (office-1 and office-2) during working time.",
+        "type": "normal",
+        "actor": {
+            "role": "nurse",
+            "organization": "Hospital-A"
+        },
+        "sequence": [
+            {
+                "location": "office-1"
+            },
+            {
+                "location": "office-2"
+            }
+        ],
+        "context": {
+            "day": "Mon, Tue, Wed, Thu, Fri",
+			"time": {
+				"start": "09:00",
+				"end": "17:00"
+			},
+			"time-window": "daily"
+		},
+    "support": "80"
+    },
+    {
+        "id": "P-00002",
+        "description": "Radiologist Pattern 1",
+        "type": "normal",
+        "actor": {
+            "role": "radiologist"
+        },
+        "sequence": [
+            {
+                "operation": "read",
+                "resource": "/order.xml"
+            },
+            {
+                "operation": "read",
+                "resource": "*"
+            },
+            {
+                "operation": "read",
+                "resource": "/image2.jpg"
+            },
+            {
+                "operation": "read",
+                "resource": "/image3.jpg"
+            },
+            {
+                "operation": "create",
+                "resource": "/image4.jpg"
+            }
+        ],
+        "context": {
+            "day": "Mon, Tue, Thu, Fri",
+            "time": {
+                "start": "09:00",
+                "end": "17:00"
+            },
+            "time-window": "60"
+        },
+       "support": "20"
+    },
+    {
+        "id": "P-00003",
+        "description": "Compromisedaccount",
+        "type": "abnormal",
+        "sequence": [
+            {
+                "location": "toronto"
+            },
+            {
+                "location": "hamilton"
+            }
+        ],
+		"context": {
+			"time-window": "20"
+		},
+        "support": "0.1"
+    }
+]
