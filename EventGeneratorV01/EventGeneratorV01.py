@@ -16,8 +16,8 @@ import json
 Verbosity = 4
 
 if(Verbosity > 0):
-    print('Event Generator Version 0.0.9')
-    print('updated 1/21/2015\n')
+    print('Event Generator Version 0.99')
+    print('updated 3/10/2015\n')
     print('Authors: Bender, Ma, Sartipi; Jan 2015\n\n')
 
 Timestamp1 = time.time()
@@ -53,7 +53,8 @@ Sequence_Patterns = []
 Number_of_Sequence_Patterns = 1
 Sequence_Pattern_Correlation = 0.4
 Average_Sequence_Pattern_Length = 3
-User_Defined_Sequence_Patterns = [[0,1],[0,2,1]]
+#User_Defined_Sequence_Patterns = [[0,1],[0,2,1]]
+User_Defined_Sequence_Patterns = [[]]
 
 # user behaviour patterns
 # Note: these are encoded identically as sequence patterns but they are kept seperate because they receive special treatment when generating events
@@ -63,6 +64,8 @@ Number_of_Behaviour_Patterns = 0
 Average_Behaviour_Pattern_Length = 0
 # Note: these behaviour patterns are loaded from a JSON file called the behaviour pattern repository 
 User_Defined_Behaviour_Patterns = []
+Avg_Unique_Users_Per_Day = 50 
+Avg_Events_Per_User_Per_Day = 10 # should this be an absolute number or could it be a percentage of the total number of events per day? it could also be calculated by # events per day / number of users per day
 
 # simulation parameters
 # day/month/year
@@ -79,10 +82,11 @@ Std_Deviation_Rush_Hour_2 = 90
 
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 25 # load test -> 100 days * 25000 events / day  = 2,500,000 events
+Average_Events_Per_Day = 500 # load test -> 100 days * 25000 events / day  = 2,500,000 events
 Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 Now = datetime.datetime.now()
+
 if(Verbosity>1):
     print("Run Date : " + str(Now))
     print("")
@@ -136,7 +140,7 @@ def Load_ValueSets():
 
     # TODO: create User_Defined_Roles array, copy that into roles value set first then autgenerte roles up to NumberOFRoles
     Roles = ["R-1", "R-2"]
-    Users = ["U-1", "U-2"]
+    Users = ["U-1", "U-2", "U-3", "U-4", "U-5", "U-6", "U-7", "U-8", "U-9", "U-10"]
     Locations = ["L-1", "L-2"]
     Times = ["T-1", "T-2"]
     Patients = ["P-1", "P-2"]
@@ -673,6 +677,8 @@ def Generate_Events():
     global Std_Deviation_Rush_Hour_1 
     global Median_Rush_Hour_2 
     global Std_Deviation_Rush_Hour_2
+    global Avg_Unique_Users_Per_Day 
+    global Avg_Events_Per_User_Per_Day
 
 
     Current_Day = Start_Date
@@ -690,6 +696,37 @@ def Generate_Events():
     # for begin date to end date - make a list of days to be included in simulation first, then iterate through the list 
     # e.g. since there are day of week exclusions, make sure current day is an event day (i.e. Sundays could be blocked off) if it is a blocked day then skip to next day
 
+    # user behaviour patterns depend heavily on support
+    # for example, a support of 80% means that 80% of users will exhibit that behaviour
+    # select "support %" of user domain for each pattern 
+    # event distribution depends on Avg_Unique_Users_Per_Day and Avg_Events_Per_User_Per_Day 
+    # find the number of patterns we are dealing with 
+    Num_Patterns = len(Behaviour_Patterns_Support)
+    # find the number of users we have access to
+    Num_Users = len(Users)
+    # for each pattern, assign the users that will exhibit that behaviour
+    Patterns_Users = []
+    for r in range(len(Behaviour_Patterns_Support)):
+        # find the support for this pattern
+        Current_Pattern_Support = float(Behaviour_Patterns_Support[r])
+        # calculate the number of users that will exhibit this pattern
+        Num_Users_This_Pattern = int(Current_Pattern_Support / 100  * Num_Users)
+        # make a working copy of the users structure 
+        Users_Copy = list(Users) # note: the '=' operator does not copy the list, it copies the reference to the list therefore any operations on new list effect the old list 
+        # randomize the users for selection
+        random.shuffle(Users_Copy)
+        # reset the current list of users
+        Users_This_Pattern = []
+        # copy the random users into the users_patterns collection
+        for s in range(Num_Users_This_Pattern):
+            if(len(Users_Copy)>0):
+                Users_This_Pattern.append(Users_Copy.pop())
+        Patterns_Users.append(Users_This_Pattern)    
+            
+    if(Verbosity>3):
+        print("Patterns/Users structure: " + str(Patterns_Users))
+
+    # loop through each day of the simulation and create events for that day
     while Current_Day <= End_Date:
         if(Verbosity>2):
             sys.stdout.write(".")
@@ -742,10 +779,59 @@ def Generate_Events():
                 Daily_Events.append(Current_Event)
 
 
-            # 
+            # insert user behaviour patterns to the current day
+            # =================================================
+            Behaviour_Pattern_Events = 0
+             
+            Total_Num_Users_Today = int(random.normalvariate(Avg_Unique_Users_Per_Day, 10)) # 2nd parm std deviation
+            for t in range(Total_Num_Users_Today):
+                Current_User_Index = random.randint(0, len(Users)-1)
+                Current_User = Users[Current_User_Index]
+                Num_Events_Current_User = int(random.normalvariate(Avg_Events_Per_User_Per_Day, 3))
+                Num_Daily_Events = len(Daily_Events)
+                First_Event_Position = random.randint(0, int(Num_Daily_Events * 0.05))
+                Pointer = First_Event_Position
 
+                for u in range(len(Patterns_Users)-1):
+                    User_List = Patterns_Users[u]
+                    for w in range(len(User_List)-1):
+                        if(Current_User == User_List[w]):
+                            # we found a user that has been assigned to pattern u
+                            # instantiate pattern u
+                            Current_Pattern = list(Behaviour_Patterns[u])
+                            Current_Pattern_Length = len(Current_Pattern)
+                            Advance = int(Num_Daily_Events / Current_Pattern_Length)
+
+                            # pick a slot within the first 5% of the events
+
+                            # copy the current user into the pattern template 
+                            for x in range(len(Current_Pattern)-1):
+                                Pattern_Step = Current_Pattern[x]
+                                Pattern_Step[1] = Current_User
+                                # insert the pattern steps into the event stream 
+                                # randomly pick a slot from the current day and copy the event into it
+                                # figure out how long the current sequence is
+                                if(Pointer<len(Daily_Events)-1):
+                                    Update_Event = Daily_Events[Pointer]
+                                else:
+                                    Daily_Events.append(Empty_Event)
+                                    Update_Event = Daily_Events[len(Daily_Events)-1]
+
+                                Update_Event[0] = Pattern_Step[0]
+                                Update_Event[1] = Pattern_Step[1]
+                                Update_Event[2] = Pattern_Step[2]
+                                Update_Event[5] = Pattern_Step[4]
+                                Update_Event[6] = Pattern_Step[5]
+                                Update_Event[7] = Pattern_Step[6]
+                                Pointer = Pointer + Advance
+                                Behaviour_Pattern_Events = Behaviour_Pattern_Events + 1
+
+
+
+
+            # insert sequence patterns to the current day
+            # ===========================================
             # TODO:: subtract out the sequences that get generated by the user behaviour pattern insert above
-            # insert sequence patterns
             # use ?sequence saturation %? (degree of utilization of sequences) to 
             # determine how many sequences to insert vs. just itemsets
             # for example assume sat % of 50% - approx half of events will be 
