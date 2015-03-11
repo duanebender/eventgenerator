@@ -1,0 +1,75 @@
+[
+    {
+        "id": "P-00001",
+		"description": "nurse in Lakeridge Oshawa works at three locations in order (office-1, office-3, office-4) in the afternoon for checking patient health status.",
+		"type": "normal",
+        "actor": {
+            "role": "nurse"
+        },
+		"context": {
+			"action": "update"
+		},
+        "sequence": [
+            {
+                "location": "office-1-Lakeridge-Oshawa"
+            },
+            {
+                "location": "office-3-Lakeridge-Oshawa"
+            },
+            {
+                "location": "office-4-Lakeridge-Oshawa"
+            }
+        ],
+        "time": {
+			"start": "13:00",
+			"end": "17:00",
+			"window": "24h"
+		},
+		"support": "0.05"
+    },
+    {
+        "id": "P-00002",
+        "description": "Physician Pattern 1",
+        "type": "normal",
+        "actor": {
+            "role": "physician"
+        },
+		"context": {
+			"location": "office-1-Juravinski-Hamilton"
+		},
+        "sequence": [
+            {
+                "operation": "read"
+            },
+            {
+                "operation": "read"
+            },
+            {
+                "operation": "create"
+            }
+        ],
+        "time": {
+			"start": "09:00",
+			"end": "17:00",
+            "window": "60m"
+        },
+       "support": "0.1"
+    },
+    {
+        "id": "P-00003",
+        "description": "Compromisedaccount",
+        "type": "abnormal",
+        "sequence": [
+            {
+                "location": "office-3-Lakeridge-Oshawa"
+            },
+            {
+                "location": "office-3-McMaster-Hamilton"
+            }
+        ],
+		"time": {
+			"window": "20m"
+		},
+        "support": "0.001"
+    }
+]
