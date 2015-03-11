@@ -24,6 +24,7 @@ class Pattern():
 			itemset = []
 			sequence = []
 			time = {}
+			support = 0
 			if "actor" in entity:
 				for key, value in entity["actor"].iteritems():
 					itemset.append(self.dict_attr[value])
@@ -41,11 +42,15 @@ class Pattern():
 					
 			if "time" in entity:
 				time = entity["time"]
+				
+			if "support" in entity:
+				support = entity["support"]
 					
 			self.patterns[entity["id"]] = {}
 			self.patterns[entity["id"]]["itemset"] = itemset
 			self.patterns[entity["id"]]["sequence"] = sequence
 			self.patterns[entity["id"]]["time"] = time
+			self.patterns[entity["id"]]["support"] = support
 		
 if __name__ == '__main__':
 	attribute = Attribute()
