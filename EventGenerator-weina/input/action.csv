@@ -1,5 +1,16 @@
-read,A-1
-update,A-2
-create,A-3
-execute,A-4
-delete,A-5
+create order,A-1
+create exam,A-2
+create report,A-3
+create profile,A-4
+update order,A-5
+update exam,A-6
+update report,A-7
+update profile,A-8
+read order,A-9
+read exam,A-10
+read report,A-11
+read profile,A-12
+delete order,A-13
+delete exam,A-14
+delete report,A-15
+delete profile,A-16

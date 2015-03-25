@@ -1,17 +1,17 @@
 {
 	"user" : {
 		"represent": "U-",
-		"type": "normal",
+		"type": "random",
 		"domain": "100",
-		"mu": "50",
-		"sigma": "20"
+		"mu": "0",
+		"sigma": "0"
 	},
-	"role": {
-		"represent": "R-",
+	"action": {
+		"represent": "A-",
 		"type": "normal",
-		"domain": "6",
-		"mu": "3",
-		"sigma": "5"
+		"domain": "16",
+		"mu": "8",
+		"sigma": "3"
 	},
 	"patient": {
 		"represent": "P-",
@@ -25,24 +25,20 @@
 		"type": "normal",
 		"domain": "31",
 		"mu": "15",
-		"sigma": "50"
-	},
-	"action": {
-		"represent": "A-",
-		"type": "poisson",
-		"domain": "5",
-		"lamb": "1"
+		"sigma": "5"
 	},
 	"location": {
 		"represent": "L-",
-		"type": "poisson",
+		"type": "normal",
 		"domain": "15",
-		"lamb": "7"
+		"mu": "8",
+		"sigma": "4"
 	},
 	"time": {
 		"represent": "T-",
-		"type": "poisson",
+		"type": "normal",
 		"domain": "24",
-		"lamb": "10"
+		"mu": "11",
+		"sigma": "4"
 	}
 }

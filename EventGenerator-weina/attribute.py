@@ -36,6 +36,7 @@ class Attribute():
 					item = line.rstrip('\r\n').split(',')
 					self.rep_to_sem[item[1]] = item[0]
 					self.sem_to_rep[item[0]] = item[1]
+			csvfile.close()
 		
 if __name__ == '__main__':
 	attribute = Attribute()
