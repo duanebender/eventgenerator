@@ -26,33 +26,35 @@ Timestamp1 = time.time()
 
 # Value set parameters
 Roles = []
-Number_of_Roles = 1
+Number_of_Roles = 5
 Users = []
-Number_of_Users = 2
+Number_of_Users = 200
 Locations = []
 Number_of_Locations = 10
 Times = []
 Number_of_Times = 0
 Patients = []
-Number_of_Patients = 4
+Number_of_Patients = 1000
 Data = []
-Number_of_Data = 20
+Number_of_Data = 20000
 Operations = []
 Number_of_Operations = 12
 
 # itemset parameters
 Itemsets = []
-Number_of_Itemsets = 10
-Itemset_Correlation = 0.2
-Average_Itemset_Length = 3
-User_Defined_Itemsets = [["R-1","U-99", "", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", "", ""], ["R-2","U-2","","T-520","","","",""]]
-Itemset_Saturation = 0.3 # this is the itemset random saturation % (range 0.0 -> 1.0) (ie when generating events use 20% defined itemsets and 80% completely random events) 
+Number_of_Itemsets = 3
+Itemset_Correlation = 0.0
+Average_Itemset_Length = 7
+#User_Defined_Itemsets = [[]]
+User_Defined_Itemsets = [["R-1","U-99", "", "", "P-1", "D-1", "O-1"], ["R-1", "U-66", "L-1", "", "", "", ""], ["R-2","U-2","","T-680","","",""]]
+Itemset_Saturation = 1.0 # this is the itemset random saturation % (range 0.0 -> 1.0) (eg 0.2 says when generating events use 20% defined itemsets and 80% completely random events) 
 
 # sequence pattern parameters
 Sequence_Patterns = []
-Number_of_Sequence_Patterns = 1
-Sequence_Pattern_Correlation = 0.4
-Average_Sequence_Pattern_Length = 3
+Number_of_Sequence_Patterns = 0
+#Sequence_Pattern_Correlation = 0.4
+Sequence_Pattern_Correlation = 0.0
+Average_Sequence_Pattern_Length = 0 #3
 #User_Defined_Sequence_Patterns = [[0,1],[0,2,1]]
 User_Defined_Sequence_Patterns = [[]]
 
@@ -64,26 +66,28 @@ Number_of_Behaviour_Patterns = 0
 Average_Behaviour_Pattern_Length = 0
 # Note: these behaviour patterns are loaded from a JSON file called the behaviour pattern repository 
 User_Defined_Behaviour_Patterns = []
-Avg_Unique_Users_Per_Day = 50 
+Avg_Unique_Users_Per_Day = 10 
 Avg_Events_Per_User_Per_Day = 10 # should this be an absolute number or could it be a percentage of the total number of events per day? it could also be calculated by # events per day / number of users per day
+Average_Events_Per_Day = 1000 # this parameter determines the number of events generated per day 
+#load test -> 100 days * 25000 events / day  = 2,500,000 events
+Sequence_Saturation = 0.0 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 # simulation parameters
 # day/month/year
 Events = []
-Start_Date = datetime.date(2015, 1, 1)
+Start_Date = datetime.date(2015, 3, 16)
 Start_Time = datetime.time(0, 0, 0)
-End_Date = datetime.date(2015, 4, 10) # about 100 days
+End_Date = datetime.date(2015, 3, 26) # about 10 days
+#End_Date = datetime.date(2015, 4, 10) # about 100 days
 End_Time = datetime.time(23, 59, 59)
 #Rush Hour parameters
-Median_Rush_Hour_1 = 540 # minutes from midnight (540 = 9 * 60) = 9am
-Std_Deviation_Rush_Hour_1 = 90 # in minutes
-Median_Rush_Hour_2 = 840
-Std_Deviation_Rush_Hour_2 = 90
+Median_Rush_Hour_1 = 630 # minutes from midnight (600 = 10 * 60) = 10am
+Std_Deviation_Rush_Hour_1 = 120 # in minutes
+Median_Rush_Hour_2 = 900
+Std_Deviation_Rush_Hour_2 = 180
 
 #Include_Days_of_Week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] # mon = 0, .... sun = 6
 Include_Days = [0,1,2,3,4] # mon-fri; mon=0....sun=6
-Average_Events_Per_Day = 500 # load test -> 100 days * 25000 events / day  = 2,500,000 events
-Sequence_Saturation = 0.50 # value between 0-1 (percentage between random itemsets and defined sequence patterns)
 
 Now = datetime.datetime.now()
 
@@ -150,7 +154,7 @@ def Load_ValueSets():
     namespace = "4444"
 
     # note: loading behsviour patterns also adds values to the value set collections of roles, users etc. 
-    Load_Behaviour_Patterns()
+    # Load_Behaviour_Patterns()
      
     if(len(Roles) < Number_of_Roles):
         # how to avoid collisions? use a random prefix? 
@@ -314,7 +318,7 @@ def Load_Parameters():
 
 
 
-def Generate_Itemsets():
+def Generate_Itemset_Templates():
     "Procedure which generates itemset templates"
     if (Verbosity>2):
         sys.stdout.write("Generating " + str(Number_of_Itemsets) + " itemsets...") 
@@ -538,7 +542,7 @@ def Generate_Itemsets():
    
 
 
-def Generate_Sequence_Patterns():
+def Generate_Sequence_Pattern_Templates():
     "Procedure which generates sequence patterns"
     
     global Roles
@@ -782,14 +786,14 @@ def Generate_Events():
             # insert user behaviour patterns to the current day
             # =================================================
             Behaviour_Pattern_Events = 0
-             
-            Total_Num_Users_Today = int(random.normalvariate(Avg_Unique_Users_Per_Day, 10)) # 2nd parm std deviation
+            
+            Total_Num_Users_Today = int(random.normalvariate(Avg_Unique_Users_Per_Day, 0.3 * Avg_Unique_Users_Per_Day)) # 2nd parm std deviation
             for t in range(Total_Num_Users_Today):
                 Current_User_Index = random.randint(0, len(Users)-1)
                 Current_User = Users[Current_User_Index]
                 Num_Events_Current_User = int(random.normalvariate(Avg_Events_Per_User_Per_Day, 3))
                 Num_Daily_Events = len(Daily_Events)
-                First_Event_Position = random.randint(0, int(Num_Daily_Events * 0.05))
+                First_Event_Position = random.randint(0, int(Num_Daily_Events * 0.05)) # pick a random number between 0 and 5% from the beginning of the events (ie insert some random noise at the beginning rather than start with a pattern every time)
                 Pointer = First_Event_Position
 
                 for u in range(len(Patterns_Users)-1):
@@ -839,9 +843,12 @@ def Generate_Events():
             # number of sequences to select = total number for the day / avg  sequence length * saturation ratio
             # Example: # seq to select = 100 events for the day  / avg seq length of 4 * 0.20 (20%) = 100 / 4 * 0.2 = 25 * .2 = 5 sequences
             # representing an average of 20% of the events for the day, the rest will be random itemsets and completely random events
-
-            Num_Sequences = int(Average_Events_Per_Day / Average_Sequence_Pattern_Length * Sequence_Saturation)
-            Step_Size = int((len(Daily_Events)) / (Num_Sequences * Average_Sequence_Pattern_Length))
+            if(Average_Sequence_Pattern_Length == 0 or Sequence_Saturation == 0):
+                Num_Sequences = 0
+                Step_Size = 0
+            else:
+                Num_Sequences = int(Average_Events_Per_Day / Average_Sequence_Pattern_Length * Sequence_Saturation)
+                Step_Size = int((len(Daily_Events)) / (Num_Sequences * Average_Sequence_Pattern_Length))
             Lower_Marker = 0
             Upper_Marker = Step_Size
 
@@ -901,11 +908,12 @@ def Generate_Events():
             Event_Low_Time = ""
             Event_High_Time = ""
 
-            # insert random itemsets 
+            # insert itemsets 
             # remember that itemsets are templates and are not complete, so they need to be filled in 
             while(Itemset_Events > 0):
                 Current_Event = []
                 # randomly pick an itemset
+                # TODO: handle edge case where no itemsets are defined
                 Random = random.randint(0, len(Itemsets)-1)
                 Itemset = Itemsets[Random]
                 # extract the time and find out the start position 
@@ -914,8 +922,9 @@ def Generate_Events():
                 if Itemset_Time != "" :
                     # time was defined in the itemset template so it may be significant - must preserve it
                     # the times are already in sorted order - this code inserts the random itemset into the correct slot to preserve the time order
-                    for x in range(0,len(Daily_Events)-1):
-                        Current_Event = Daily_Events[x]
+                    for x in range(len(Daily_Events)-1):
+                        # Note: this makes a reference to the underlying data structure so any changes to the reference variable changes 
+                        Current_Event = Daily_Events[x].copy()
                         Event_Time = Current_Event[3]
                                            
                         # make sure we're not at the last element and therefore would go out of bounds by checking the next element
@@ -935,7 +944,7 @@ def Generate_Events():
                         Current_Event[7] = Itemset[6]
 
                         # three cases - either the time is lower than the first time, somewhere in the middle or higher than the last time 
-                        if(Itemset_Time < Event_Time):  # time is lower than the first element, add an event at the beginning
+                        if(int(Itemset_Time[2:]) < int(Event_Time[2:])):  # time is lower than the first element, add an event at the beginning
                             # need to insert at beginning - no events with lower time
                             Daily_Events.insert(0, Current_Event)
                             #print("inserted " + Current_Event[3] + " at position 0")  
@@ -949,14 +958,21 @@ def Generate_Events():
 
                             Itemset_Events = Itemset_Events - 1                    
                             break
+
+                        # if the time is higher than the last event then just append event to end of daily event list
+                        elif(int(Itemset_Time[2:]) > int(Daily_Events[len(Daily_Events)-1][3][2:])):
+                            Daily_Events.append(Current_Event) # add object to end of list 
+                            Itemset_Events = Itemset_Events - 1                    
+                            break
                                                  
-                        if(Itemset_Time >= Event_Time and Itemset_Time <= Next_Event_Time): # we have found the sort position - need to make sure we're not overwriting an existing event, if so then do an insert
+                        elif(int(Itemset_Time[2:]) >= int(Event_Time[2:]) and int(Itemset_Time[2:]) <= int(Next_Event_Time[2:])): 
+                            # we have found the sort position - need to make sure we're not overwriting an existing event, if so then do an insert
                             # (role, user, location, time, patient, data, operation)
-                            if Daily_Events[x][0] == "" and Daily_Events[x][1] == "" and Daily_Events[x][2] == "" and Daily_Events[x][5] == "" and Daily_Events[x][6] == "" and Daily_Events[x][7] == "" :
+                            if(Daily_Events[x][0] == "" and Daily_Events[x][1] == "" and Daily_Events[x][2] == "" and Daily_Events[x][5] == "" and Daily_Events[x][6] == "" and Daily_Events[x][7] == ""):
                                 Daily_Events[x] = Current_Event
                             else:
                                 # insert a new one at the internal location
-                                Daily_Events.insert(x, Current_Event)
+                                Daily_Events.insert(x+1, Current_Event)
                                 #print("inserted " + Current_Event[3] + " at position " + str(x))  
                                 # then delete an empty event 
                                 for z in range(len(Daily_Events)-1):
@@ -968,9 +984,10 @@ def Generate_Events():
                                                      
                             Itemset_Events = Itemset_Events - 1
                             break
-                else : # itemset time was blank, insert in first available location that is unused (no attributes are filled other than time and date)
-                    for x in range(len(Daily_Events)-1):
-                        Current_Event = Daily_Events[x]
+                else : # itemset time was blank, insert in random available location that is unused (no attributes are filled other than time and date)
+                    Offset = random.randint(0, len(Daily_Events)-1)
+                    for x in range(Offset, len(Daily_Events)-1):
+                        Current_Event = Daily_Events[x].copy()
                         if Current_Event[0] == "" and Current_Event[1] == "" and Current_Event[2] == "" and Current_Event[5] == "" and Current_Event[6] == "" and Current_Event[7] == "":
                             # looks like an empty event, go ahead and fill in 
                             Current_Event[0] = Itemset[0]
@@ -1043,8 +1060,8 @@ Load_ValueSets()
 # load the parameters for the simulation 
 Load_Parameters()
 
-Generate_Itemsets()
+Generate_Itemset_Templates()
 
-Generate_Sequence_Patterns()
+Generate_Sequence_Pattern_Templates()
 
 Generate_Events()
